@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Fixed middle-mouse interception to match Valheim's release-triggered dismantle action.
+- Hid the source piece and disabled its local colliders while the placement ghost is active.
+- Restored the source visuals and colliders when a move is cancelled.
+
 ## 1.0.0
 
 - Added `Left Alt + middle mouse` pickup for placed hammer pieces.

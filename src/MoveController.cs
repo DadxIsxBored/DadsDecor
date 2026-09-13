@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -9,7 +10,6 @@ namespace DadsDecor;
 internal static class MoveController
 {
     private const string MoveRpc = "DadsDecor_MovePiece_V1";
-    private static readonly MethodInfo GetRightItemMethod = AccessTools.Method(typeof(Humanoid), "GetRightItem");
     private static readonly MethodInfo CheckCanRemovePieceMethod = AccessTools.Method(typeof(Player), "CheckCanRemovePiece", new[] { typeof(Piece) });
     private static readonly MethodInfo ClearCachedSupportMethod = AccessTools.Method(typeof(WearNTear), "ClearCachedSupport");
     private static readonly FieldInfo PlaceRotationField = AccessTools.Field(typeof(Player), "m_placeRotation");
@@ -23,6 +23,9 @@ internal static class MoveController
     private static int _requirementCheckDepth;
     private static bool _insidePlacementUpdate;
     private static bool _moveCompleted;
+    private static readonly List<RendererState> HiddenRenderers = new();
+    private static readonly List<ColliderState> DisabledColliders = new();
+    private static readonly List<LightState> HiddenLights = new();
 
     internal static bool Active =>
         _player != null && _sourcePiece != null && _selectedPrefab != null;
@@ -40,7 +43,6 @@ internal static class MoveController
             Player.m_localPlayer != player ||
             player.IsDead() ||
             !player.InPlaceMode() ||
-            !IsHammerEquipped(player) ||
             player.GetSelectedPiece() != _selectedPrefab)
         {
             Cancel(true);
@@ -55,8 +57,7 @@ internal static class MoveController
         if (DadsDecorPlugin.ModEnabled.Value != true ||
             player != Player.m_localPlayer ||
             !player.InPlaceMode() ||
-            !IsHammerEquipped(player) ||
-            !ShortcutDown(DadsDecorPlugin.MoveShortcut.Value))
+            !MoveShortcutHeldForHammerAction(DadsDecorPlugin.MoveShortcut.Value))
             return false;
 
         Piece? piece = FindAimedPiece(player);
@@ -185,6 +186,7 @@ internal static class MoveController
         _player = player;
         _sourcePiece = piece;
         _selectedPrefab = selected;
+        HideSource(piece);
         player.Message(
             MessageHud.MessageType.TopLeft,
             $"Picked up {DisplayName(piece)}. Place with left click or press Escape to cancel.");
@@ -247,11 +249,13 @@ internal static class MoveController
         PlaceRotationField.SetValue(player, step);
     }
 
-    private static bool IsHammerEquipped(Player player)
+    private static bool MoveShortcutHeldForHammerAction(KeyboardShortcut shortcut)
     {
-        ItemDrop.ItemData? item = GetRightItemMethod.Invoke(player, Array.Empty<object>()) as ItemDrop.ItemData;
-        return item?.m_dropPrefab != null &&
-               string.Equals(Utils.GetPrefabName(item.m_dropPrefab), "Hammer", StringComparison.Ordinal);
+        if (shortcut.MainKey != KeyCode.None && shortcut.MainKey != KeyCode.Mouse2 && !Input.GetKey(shortcut.MainKey))
+            return false;
+        foreach (KeyCode modifier in shortcut.Modifiers)
+            if (!Input.GetKey(modifier)) return false;
+        return true;
     }
 
     private static bool ShortcutDown(KeyboardShortcut shortcut)
@@ -282,11 +286,81 @@ internal static class MoveController
             ClearCachedSupportMethod.Invoke(wear, Array.Empty<object>());
     }
 
+    private static void HideSource(Piece piece)
+    {
+        RestoreSource();
+        foreach (Renderer renderer in piece.GetComponentsInChildren<Renderer>(true))
+        {
+            HiddenRenderers.Add(new RendererState(renderer, renderer.enabled));
+            renderer.enabled = false;
+        }
+        foreach (Collider collider in piece.GetComponentsInChildren<Collider>(true))
+        {
+            DisabledColliders.Add(new ColliderState(collider, collider.enabled));
+            collider.enabled = false;
+        }
+        foreach (Light light in piece.GetComponentsInChildren<Light>(true))
+        {
+            HiddenLights.Add(new LightState(light, light.enabled));
+            light.enabled = false;
+        }
+    }
+
+    private static void RestoreSource()
+    {
+        foreach (RendererState state in HiddenRenderers)
+            if (state.Renderer != null) state.Renderer.enabled = state.Enabled;
+        foreach (ColliderState state in DisabledColliders)
+            if (state.Collider != null) state.Collider.enabled = state.Enabled;
+        foreach (LightState state in HiddenLights)
+            if (state.Light != null) state.Light.enabled = state.Enabled;
+        HiddenRenderers.Clear();
+        DisabledColliders.Clear();
+        HiddenLights.Clear();
+    }
+
     private static void ClearMove()
     {
+        RestoreSource();
         _player = null;
         _sourcePiece = null;
         _selectedPrefab = null;
         _requirementCheckDepth = 0;
+    }
+
+    private readonly struct RendererState
+    {
+        internal readonly Renderer Renderer;
+        internal readonly bool Enabled;
+
+        internal RendererState(Renderer renderer, bool enabled)
+        {
+            Renderer = renderer;
+            Enabled = enabled;
+        }
+    }
+
+    private readonly struct ColliderState
+    {
+        internal readonly Collider Collider;
+        internal readonly bool Enabled;
+
+        internal ColliderState(Collider collider, bool enabled)
+        {
+            Collider = collider;
+            Enabled = enabled;
+        }
+    }
+
+    private readonly struct LightState
+    {
+        internal readonly Light Light;
+        internal readonly bool Enabled;
+
+        internal LightState(Light light, bool enabled)
+        {
+            Light = light;
+            Enabled = enabled;
+        }
     }
 }

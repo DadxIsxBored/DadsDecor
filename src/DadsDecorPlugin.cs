@@ -10,7 +10,7 @@ public sealed class DadsDecorPlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.dadisbored.dadsdecor";
     public const string PluginName = "DadsDecor";
-    public const string PluginVersion = "1.0.0";
+    public const string PluginVersion = "1.0.1";
 
     internal static ConfigEntry<bool> ModEnabled = null!;
     internal static ConfigEntry<KeyboardShortcut> MoveShortcut = null!;
