@@ -10,6 +10,7 @@ namespace DadsDecor;
 internal static class MoveController
 {
     private const string MoveRpc = "DadsDecor_MovePiece_V1";
+    private const float PickupHoldSeconds = 0.35f;
     private static readonly MethodInfo CheckCanRemovePieceMethod = AccessTools.Method(typeof(Player), "CheckCanRemovePiece", new[] { typeof(Piece) });
     private static readonly MethodInfo ClearCachedSupportMethod = AccessTools.Method(typeof(WearNTear), "ClearCachedSupport");
     private static readonly FieldInfo PlaceRotationField = AccessTools.Field(typeof(Player), "m_placeRotation");
@@ -23,6 +24,10 @@ internal static class MoveController
     private static int _requirementCheckDepth;
     private static bool _insidePlacementUpdate;
     private static bool _moveCompleted;
+    private static Player? _pendingRemovePlayer;
+    private static float _removePressStarted;
+    private static bool _pickupHoldTriggered;
+    private static int _releaseFrame = -1;
     private static readonly List<RendererState> HiddenRenderers = new();
     private static readonly List<ColliderState> DisabledColliders = new();
     private static readonly List<LightState> HiddenLights = new();
@@ -32,6 +37,8 @@ internal static class MoveController
 
     internal static void Update()
     {
+        UpdateRemoveGesture();
+
         if (!Active)
         {
             if (_player != null || _sourcePiece != null || _selectedPrefab != null) ClearMove();
@@ -52,18 +59,20 @@ internal static class MoveController
         if (ShortcutDown(DadsDecorPlugin.CancelShortcut.Value)) Cancel(true);
     }
 
-    internal static bool HandleHammerAction(Player player)
+    internal static bool HandleRemoveAction(Player player)
     {
-        if (DadsDecorPlugin.ModEnabled.Value != true ||
-            player != Player.m_localPlayer ||
-            !player.InPlaceMode() ||
-            !MoveShortcutHeldForHammerAction(DadsDecorPlugin.MoveShortcut.Value))
-            return false;
+        if (_pendingRemovePlayer != player) return false;
 
-        Piece? piece = FindAimedPiece(player);
-        if (piece == null) return true;
-        BeginMove(player, piece);
-        return true;
+        if (!_pickupHoldTriggered && Time.unscaledTime - _removePressStarted >= PickupHoldSeconds)
+        {
+            _pickupHoldTriggered = true;
+            Piece? piece = FindAimedPiece(player);
+            if (piece != null) BeginMove(player, piece);
+        }
+
+        bool suppressRemove = _pickupHoldTriggered;
+        ClearRemoveGesture();
+        return suppressRemove;
     }
 
     internal static bool IsMovingSelection(Player player, Piece piece)
@@ -156,6 +165,12 @@ internal static class MoveController
             player.Message(MessageHud.MessageType.TopLeft, $"Move cancelled: {displayName} remained in place.");
     }
 
+    internal static void Reset()
+    {
+        ClearRemoveGesture();
+        Cancel(false);
+    }
+
     internal static void RegisterRoutedRpc()
     {
         ZRoutedRpc rpc = ZRoutedRpc.instance;
@@ -190,6 +205,58 @@ internal static class MoveController
         player.Message(
             MessageHud.MessageType.TopLeft,
             $"Picked up {DisplayName(piece)}. Place with left click or press Escape to cancel.");
+    }
+
+    private static void UpdateRemoveGesture()
+    {
+        Player? localPlayer = Player.m_localPlayer;
+        if (_pendingRemovePlayer == null)
+        {
+            if (DadsDecorPlugin.ModEnabled.Value == true &&
+                localPlayer != null &&
+                localPlayer.InPlaceMode() &&
+                Input.GetKeyDown(KeyCode.Mouse2))
+            {
+                _pendingRemovePlayer = localPlayer;
+                _removePressStarted = Time.unscaledTime;
+                _pickupHoldTriggered = false;
+                _releaseFrame = -1;
+            }
+            return;
+        }
+
+        Player player = _pendingRemovePlayer;
+
+        if (DadsDecorPlugin.ModEnabled.Value != true ||
+            player != localPlayer ||
+            player.IsDead() ||
+            !player.InPlaceMode())
+        {
+            ClearRemoveGesture();
+            return;
+        }
+
+        if (!Input.GetKey(KeyCode.Mouse2))
+        {
+            if (_releaseFrame < 0) _releaseFrame = Time.frameCount;
+            else if (Time.frameCount > _releaseFrame) ClearRemoveGesture();
+            return;
+        }
+
+        _releaseFrame = -1;
+        if (_pickupHoldTriggered || Time.unscaledTime - _removePressStarted < PickupHoldSeconds) return;
+
+        _pickupHoldTriggered = true;
+        Piece? piece = FindAimedPiece(player);
+        if (piece != null) BeginMove(player, piece);
+    }
+
+    private static void ClearRemoveGesture()
+    {
+        _pendingRemovePlayer = null;
+        _removePressStarted = 0f;
+        _pickupHoldTriggered = false;
+        _releaseFrame = -1;
     }
 
     private static bool ValidateSource(Player player, Piece piece)
@@ -247,15 +314,6 @@ internal static class MoveController
         if (Mathf.Approximately(degrees, 0f)) return;
         int step = (int)Math.Round(rotation.eulerAngles.y / degrees);
         PlaceRotationField.SetValue(player, step);
-    }
-
-    private static bool MoveShortcutHeldForHammerAction(KeyboardShortcut shortcut)
-    {
-        if (shortcut.MainKey != KeyCode.None && shortcut.MainKey != KeyCode.Mouse2 && !Input.GetKey(shortcut.MainKey))
-            return false;
-        foreach (KeyCode modifier in shortcut.Modifiers)
-            if (!Input.GetKey(modifier)) return false;
-        return true;
     }
 
     private static bool ShortcutDown(KeyboardShortcut shortcut)

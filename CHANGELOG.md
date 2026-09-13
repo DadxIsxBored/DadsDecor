@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+- Replaced the pickup key combination with a middle-mouse hold.
+- Retained normal middle-mouse dismantling for short clicks.
+- Added a 0.35-second threshold that classifies pickup before Valheim's release-triggered dismantle action.
+
 ## 1.0.1
 
 - Fixed middle-mouse interception to match Valheim's release-triggered dismantle action.

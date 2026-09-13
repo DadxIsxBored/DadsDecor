@@ -9,18 +9,7 @@ internal static class RemovePiecePatch
 {
     private static bool Prefix(Player __instance, ref bool __result)
     {
-        if (!MoveController.HandleHammerAction(__instance)) return true;
-        __result = false;
-        return false;
-    }
-}
-
-[HarmonyPatch(typeof(Player), "CopyPiece")]
-internal static class CopyPiecePatch
-{
-    private static bool Prefix(Player __instance, ref bool __result)
-    {
-        if (!MoveController.HandleHammerAction(__instance)) return true;
+        if (!MoveController.HandleRemoveAction(__instance)) return true;
         __result = false;
         return false;
     }
@@ -88,6 +77,6 @@ internal static class PlayerDestroyPatch
 {
     private static void Prefix(Player __instance)
     {
-        if (__instance == Player.m_localPlayer) MoveController.Cancel(false);
+        if (__instance == Player.m_localPlayer) MoveController.Reset();
     }
 }

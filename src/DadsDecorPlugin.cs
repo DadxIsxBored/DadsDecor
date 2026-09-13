@@ -10,10 +10,9 @@ public sealed class DadsDecorPlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.dadisbored.dadsdecor";
     public const string PluginName = "DadsDecor";
-    public const string PluginVersion = "1.0.1";
+    public const string PluginVersion = "1.1.0";
 
     internal static ConfigEntry<bool> ModEnabled = null!;
-    internal static ConfigEntry<KeyboardShortcut> MoveShortcut = null!;
     internal static ConfigEntry<KeyboardShortcut> CancelShortcut = null!;
 
     private Harmony? _harmony;
@@ -25,11 +24,6 @@ public sealed class DadsDecorPlugin : BaseUnityPlugin
             "Mod Enabled",
             true,
             "Enable DadsDecor.");
-        MoveShortcut = Config.Bind(
-            "2 - Controls",
-            "Pick Up Piece Shortcut",
-            new KeyboardShortcut(KeyCode.Mouse2, KeyCode.LeftAlt),
-            "Hold the modifier and press the middle mouse button while aiming at a placed piece with the hammer.");
         CancelShortcut = Config.Bind(
             "2 - Controls",
             "Cancel Move Shortcut",
@@ -50,7 +44,7 @@ public sealed class DadsDecorPlugin : BaseUnityPlugin
 
     private void OnDestroy()
     {
-        MoveController.Cancel(false);
+        MoveController.Reset();
         _harmony?.UnpatchSelf();
     }
 }

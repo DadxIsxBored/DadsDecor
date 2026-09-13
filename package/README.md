@@ -2,7 +2,7 @@
 
 Move placed hammer pieces without dismantling and rebuilding them.
 
-Equip the hammer, aim at a placed piece, hold `Left Alt`, and press the middle mouse button. Position and rotate the normal placement ghost, then place it with the left mouse button. Press `Escape` to cancel without changing the original piece.
+Equip the hammer and aim at a placed piece. Click the middle mouse button normally to dismantle it, or hold the middle mouse button for 0.35 seconds to pick it up. Position and rotate the normal placement ghost, then place it with the left mouse button. Press `Escape` to cancel without changing the original piece.
 
 DadsDecor moves the original network object, consumes no building materials, retains normal hammer stamina and durability use, applies Valheim's removal and placement checks, and rejects terrain-modifying pieces.
 

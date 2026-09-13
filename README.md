@@ -2,11 +2,12 @@
 
 DadsDecor moves existing hammer pieces without dismantling and rebuilding them.
 
-Equip the hammer, aim at a placed piece, hold `Left Alt`, and press the middle mouse button. The selected piece becomes the active hammer placement. Position and rotate it with Valheim's normal build controls, then place it with the left mouse button. Press `Escape` to cancel; the original remains unchanged until a valid placement completes.
+Equip the hammer and aim at a placed piece. Click the middle mouse button normally to dismantle it, or hold the middle mouse button for 0.35 seconds to pick it up. The selected piece becomes the active hammer placement. Position and rotate it with Valheim's normal build controls, then place it with the left mouse button. Press `Escape` to cancel; the original remains unchanged until a valid placement completes.
 
 ## Behavior
 
 - Uses Valheim's normal placement ghost, snapping, range, ward, biome, dungeon, overlap, and space checks.
+- Distinguishes a normal middle-mouse dismantle click from a middle-mouse pickup hold.
 - Moves the original network object so creator and component data remain attached to it.
 - Consumes no building materials for a completed move.
 - Retains normal hammer stamina and durability use on placement.
@@ -17,7 +18,6 @@ Equip the hammer, aim at a placed piece, hold `Left Alt`, and press the middle m
 ## Configuration
 
 - `Mod Enabled`: enables or disables DadsDecor.
-- `Pick Up Piece Shortcut`: defaults to `Left Alt + Mouse2`, where Unity `Mouse2` is the middle mouse button.
 - `Cancel Move Shortcut`: defaults to `Escape`.
 
 Configuration path: `BepInEx/config/com.dadisbored.dadsdecor.cfg`.
