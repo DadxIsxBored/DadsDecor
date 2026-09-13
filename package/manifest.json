@@ -1,0 +1,9 @@
+{
+  "name": "DadsDecor",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/DadxIsxBored/DadsDecor",
+  "description": "Pick up and reposition placed hammer pieces without dismantling them.",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2350"
+  ]
+}

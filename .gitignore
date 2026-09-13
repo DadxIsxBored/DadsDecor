@@ -1,0 +1,11 @@
+bin/
+obj/
+dist/
+.vs/
+.idea/
+*.user
+*.suo
+*.pdb
+*.deps.json
+*.cache
+Archive/
