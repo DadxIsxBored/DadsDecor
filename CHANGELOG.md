@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+
+- Rebuild moved pieces' world-space support bounds after restoring their colliders so support checks use the new location.
+- Refresh nearby support checks after placement.
+
 ## 1.1.0
 
 - Replaced the pickup key combination with a middle-mouse hold.

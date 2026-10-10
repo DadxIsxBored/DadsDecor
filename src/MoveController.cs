@@ -13,6 +13,7 @@ internal static class MoveController
     private const float PickupHoldSeconds = 0.35f;
     private static readonly MethodInfo CheckCanRemovePieceMethod = AccessTools.Method(typeof(Player), "CheckCanRemovePiece", new[] { typeof(Piece) });
     private static readonly MethodInfo ClearCachedSupportMethod = AccessTools.Method(typeof(WearNTear), "ClearCachedSupport");
+    private static readonly MethodInfo SetupCollidersMethod = AccessTools.Method(typeof(WearNTear), "SetupColliders");
     private static readonly FieldInfo PlaceRotationField = AccessTools.Field(typeof(Player), "m_placeRotation");
     private static readonly FieldInfo PlaceRotationDegreesField = AccessTools.Field(typeof(Player), "m_placeRotationDegrees");
     private static readonly FieldInfo RemoveRayMaskField = AccessTools.Field(typeof(Player), "m_removeRayMask");
@@ -114,6 +115,7 @@ internal static class MoveController
         view.ClaimOwnership();
         zdo.SetPosition(position);
         zdo.SetRotation(rotation);
+        RestoreSource();
         ApplyTransform(source.gameObject, position, rotation);
 
         if (ZRoutedRpc.instance != null)
@@ -339,9 +341,14 @@ internal static class MoveController
     private static void ApplyTransform(GameObject instance, Vector3 position, Quaternion rotation)
     {
         instance.transform.SetPositionAndRotation(position, rotation);
+        Physics.SyncTransforms();
         WearNTear wear = instance.GetComponent<WearNTear>();
-        if (wear != null && ClearCachedSupportMethod != null)
+        if (wear != null)
+        {
             ClearCachedSupportMethod.Invoke(wear, Array.Empty<object>());
+            SetupCollidersMethod.Invoke(wear, Array.Empty<object>());
+            wear.OnPlaced();
+        }
     }
 
     private static void HideSource(Piece piece)
