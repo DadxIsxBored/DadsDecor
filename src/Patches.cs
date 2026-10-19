@@ -64,6 +64,7 @@ internal static class CountMoveMaterialsPatch
 }
 
 [HarmonyPatch(typeof(Player), nameof(Player.ConsumeResources), new[] { typeof(Piece.Requirement[]), typeof(int), typeof(int), typeof(int) })]
+[HarmonyPriority(Priority.First)]
 internal static class ConsumeMoveResourcesPatch
 {
     private static bool Prefix(Player __instance)

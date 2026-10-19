@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Prevent container resource patches from consuming materials when placing a moved piece.
+
 ## 1.1.1
 
 - Rebuild moved pieces' world-space support bounds after restoring their colliders so support checks use the new location.
