@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 
@@ -18,9 +21,33 @@ internal static class RemovePiecePatch
 [HarmonyPatch(typeof(Player), "UpdatePlacement")]
 internal static class UpdatePlacementPatch
 {
+    private static readonly MethodInfo ConsumeResourcesMethod = AccessTools.Method(
+        typeof(Player), nameof(Player.ConsumeResources),
+        new[] { typeof(Piece.Requirement[]), typeof(int), typeof(int), typeof(int) });
+    private static readonly MethodInfo ConsumePlacementResourcesMethod = AccessTools.Method(
+        typeof(MoveController), nameof(MoveController.ConsumePlacementResources));
+
     private static void Prefix(Player __instance)
     {
         MoveController.BeginPlacementUpdate(__instance);
+    }
+
+    private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        int replaced = 0;
+        foreach (CodeInstruction instruction in instructions)
+        {
+            if (instruction.Calls(ConsumeResourcesMethod))
+            {
+                instruction.opcode = OpCodes.Call;
+                instruction.operand = ConsumePlacementResourcesMethod;
+                replaced++;
+            }
+            yield return instruction;
+        }
+
+        if (replaced != 1)
+            throw new InvalidOperationException($"Expected one placement resource call; found {replaced}.");
     }
 
     private static Exception Finalizer(Exception __exception)

@@ -133,6 +133,13 @@ internal static class MoveController
         return _insidePlacementUpdate && _moveCompleted && player == Player.m_localPlayer;
     }
 
+    internal static void ConsumePlacementResources(Player player, Piece.Requirement[] requirements,
+        int qualityLevel, int itemQuality, int multiplier)
+    {
+        if (!ShouldSkipResourceConsumption(player))
+            player.ConsumeResources(requirements, qualityLevel, itemQuality, multiplier);
+    }
+
     internal static bool BeginRequirementCheck(Player player, Piece piece)
     {
         bool applies = IsMovingSelection(player, piece);

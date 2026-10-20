@@ -5,5 +5,5 @@ using System.Reflection;
 [assembly: AssemblyCompany("Dad_Is_Bored")]
 [assembly: AssemblyProduct("DadsDecor")]
 [assembly: AssemblyCopyright("Copyright 2026 Dad_Is_Bored")]
-[assembly: AssemblyVersion("1.1.2.0")]
-[assembly: AssemblyFileVersion("1.1.2.0")]
+[assembly: AssemblyVersion("1.1.3.0")]
+[assembly: AssemblyFileVersion("1.1.3.0")]

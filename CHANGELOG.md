@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+- Bypass Valheim's placement resource call when moving an existing piece, including other mods' resource hooks.
+
 ## 1.1.2
 
 - Prevent container resource patches from consuming materials when placing a moved piece.
